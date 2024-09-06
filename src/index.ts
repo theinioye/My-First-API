@@ -1,6 +1,8 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { prisma } from "../prisma";
+import bodyParser from "body-parser";
+
 dotenv.config();
 
 const app = express();
@@ -135,6 +137,68 @@ app.get("/listAllOffices", async (req: Request, res: Response) => {
   const officeList = await prisma.office.findMany();
 
   return res.json(officeList);
+});
+
+app.get("/Employees/:employeeId", async (req: Request, res: Response) => {
+  const { employeeId } = req.params;
+
+  const employee = await prisma.employee.findUnique({
+    where: {
+      id: Number(employeeId),
+    },
+  });
+
+  if (!employee) {
+    return res.status(404).json({
+      message: "Employee Not Found",
+    });
+  }
+  return res.json(employee);
+});
+
+app.patch("/Employees/:employeeId", async (req: Request, res: Response) => {
+  const { employeeId } = req.params;
+  const data = req.body;
+
+  const employee = await prisma.employee.findUnique({
+    where: {
+      id: Number(employeeId),
+    },
+  });
+  if (!employee) {
+    return res.status(404).json({
+      message: "Employee not found",
+    });
+  }
+  const updatedEmployee = await prisma.employee.update({
+    where: {
+      id: employee.id,
+    },
+    data,
+  });
+  return res.json(updatedEmployee);
+});
+
+app.delete("/Employees/:employeeId", async (req: Request, res: Response) => {
+  const { employeeId } = req.params;
+  const employee = await prisma.employee.findUnique({
+    where: {
+      id: Number(employeeId),
+    },
+  });
+  if (!employee) {
+    return res.status(404).json({
+      message: "Employee not found.",
+    });
+  }
+  await prisma.employee.delete({
+    where: {
+      id: Number(employeeId)
+    },
+  });
+  return res.status(204).json({
+    message : "Deleted Successfully"
+  });
 });
 
 app.listen(port, () => {
